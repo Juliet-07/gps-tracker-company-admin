@@ -34,20 +34,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Logo_Black from "../assets/logo_black.jpg";
 
 const Header = () => {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const isSidebarCollapsed = state === "collapsed";
-
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState("English");
-  const languages = ["English", "Français", "Kinyarwanda"];
 
   const user = {
     user_metadata: {
@@ -63,7 +56,8 @@ const Header = () => {
       id: 1,
       type: "alert",
       title: "New Company Registration",
-      message: "Transport Solutions Ltd has submitted registration for approval",
+      message:
+        "Transport Solutions Ltd has submitted registration for approval",
       time: "5 min ago",
       unread: true,
     },
@@ -101,7 +95,7 @@ const Header = () => {
     },
   ];
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -125,14 +119,9 @@ const Header = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const handleLanguageSelect = (lang: string) => {
-    setCurrentLanguage(lang);
-    setIsLanguageOpen(false);
-  };
-  
   const handleSignOut = () => {
     console.log("Signing out...");
-    navigate("/login");
+    navigate("/");
   };
 
   const handleMarkAllAsRead = () => {
@@ -148,11 +137,10 @@ const Header = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <SidebarTrigger className="hover:bg-gray-100" />
-          
+
           {isSidebarCollapsed && (
-            <Link to="/" className="flex items-center space-x-2">
-              <Wind className="h-7 w-7" />
-              <span className="text-xl font-bold hidden sm:inline">eKaze</span>
+            <Link to="/home" className="flex items-center space-x-2">
+              <img src={Logo_Black} className="w-[100px]" />
             </Link>
           )}
         </div>
@@ -167,10 +155,14 @@ const Header = () => {
             />
             <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
           </Link> */}
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative hover:bg-gray-100">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-gray-100"
+              >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
@@ -181,19 +173,21 @@ const Header = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96 p-0 rounded-lg">
               <div className="p-4 border-b flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Notifications
+                </h3>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="text-xs h-7 px-2"
                     onClick={handleMarkAllAsRead}
                   >
                     Mark all read
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="text-xs h-7 px-2 text-red-500 hover:text-red-600"
                     onClick={handleClearAll}
                   >
@@ -201,33 +195,50 @@ const Header = () => {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="max-h-96 overflow-y-auto">
                 {notifications.map((notification) => (
-                  <DropdownMenuItem key={notification.id} className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0">
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0"
+                  >
                     <div className="flex items-start gap-3 w-full">
                       <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
-                          <h4 className={`text-sm font-medium ${notification.unread ? 'text-gray-900' : 'text-gray-600'}`}>
+                          <h4
+                            className={`text-sm font-medium ${
+                              notification.unread
+                                ? "text-gray-900"
+                                : "text-gray-600"
+                            }`}
+                          >
                             {notification.title}
                           </h4>
                           {notification.unread && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
-                        <p className={`text-xs mt-1 ${notification.unread ? 'text-gray-700' : 'text-gray-500'}`}>
+                        <p
+                          className={`text-xs mt-1 ${
+                            notification.unread
+                              ? "text-gray-700"
+                              : "text-gray-500"
+                          }`}
+                        >
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {notification.time}
+                        </p>
                       </div>
                     </div>
                   </DropdownMenuItem>
                 ))}
               </div>
-              
+
               <div className="p-3 border-t">
                 {/* <Button variant="ghost" className="w-full text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50">
                   View all notifications
@@ -236,7 +247,7 @@ const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu onOpenChange={(open) => { if (!open) setIsLanguageOpen(false)}}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center space-x-2 cursor-pointer">
                 <Avatar className="h-9 w-9 bg-[#52897d] cursor-pointer">
@@ -254,89 +265,126 @@ const Header = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800">{user?.user_metadata?.full_name || 'User'}</h3>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {user?.user_metadata?.full_name || "User"}
+                  </h3>
                   {/* <p className="text-[#52897d] font-medium">{primaryRole}</p> */}
                   {/* {userRoles.length > 1 && (
                     <p className="text-xs text-gray-500">
                       +{userRoles.length - 1} more role{userRoles.length > 2 ? 's' : ''}
                     </p>
                   )} */}
-                  <p className="text-sm text-gray-500">47 vehicles • 32 drivers</p>
+                  <p className="text-sm text-gray-500">47 users • 32 devices</p>
                 </div>
               </div>
-          
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
-                <Link to="/">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
+                <Link to="/home">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-blue-50 rounded-lg">
                       <Home className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
                       <div className="font-medium text-gray-800">Dashboard</div>
-                      <div className="text-xs text-gray-500">Main overview & analytics</div>
+                      <div className="text-xs text-gray-500">
+                        Main overview & analytics
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
                 <Link to="/map">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-green-50 rounded-lg">
                       <MapPin className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-800">Live Tracking</div>
-                      <div className="text-xs text-gray-500">Real-time vehicle monitoring</div>
+                      <div className="font-medium text-gray-800">
+                        Live Tracking
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Real-time device monitoring
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
                 <Link to="/users">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-purple-50 rounded-lg">
                       <Users className="h-5 w-5 text-purple-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-800">User Management</div>
-                      <div className="text-xs text-gray-500">Manage drivers & operators</div>
+                      <div className="font-medium text-gray-800">
+                        User Management
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Manage drivers & operators
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
                 <Link to="/devices">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-orange-50 rounded-lg">
                       <Car className="h-5 w-5 text-orange-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-800">Device Management</div>
-                      <div className="text-xs text-gray-500">GPS devices & vehicles</div>
+                      <div className="font-medium text-gray-800">
+                        Device Management
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        GPS devices & vehicles
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
                 <Link to="/reports">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-amber-50 rounded-lg">
                       <BarChart3 className="h-5 w-5 text-amber-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-800">Analytics & Reports</div>
-                      <div className="text-xs text-gray-500">Performance & route insights</div>
+                      <div className="font-medium text-gray-800">
+                        Analytics & Reports
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Performance & route insights
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
                 <Link to="/geofences">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-pink-50 rounded-lg">
@@ -344,30 +392,39 @@ const Header = () => {
                     </div>
                     <div>
                       <div className="font-medium text-gray-800">Geofences</div>
-                      <div className="text-xs text-gray-500">Location boundaries & alerts</div>
+                      <div className="text-xs text-gray-500">
+                        Location boundaries & alerts
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer hover:bg-gray-50">
+
+              <DropdownMenuItem
+                asChild
+                className="px-4 py-3 cursor-pointer hover:bg-gray-50"
+              >
                 <Link to="/settings">
                   <div className="flex items-center gap-3 text-base">
                     <div className="p-2 bg-gray-100 rounded-lg">
                       <Settings className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-800">System Settings</div>
-                      <div className="text-xs text-gray-500">GPS & platform configuration</div>
+                      <div className="font-medium text-gray-800">
+                        System Settings
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        GPS & platform configuration
+                      </div>
                     </div>
                   </div>
                 </Link>
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
+
               {/* <div className="relative">
                 <div 
                   className="px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-center justify-between"
@@ -395,10 +452,13 @@ const Header = () => {
                   </div>
                 )}
               </div> */}
-              
+
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem className="px-4 py-3 cursor-pointer text-red-500 hover:!text-red-500 hover:!bg-red-50" onClick={handleSignOut}>
+
+              <DropdownMenuItem
+                className="px-4 py-3 cursor-pointer text-red-500 hover:!text-red-500 hover:!bg-red-50"
+                onClick={handleSignOut}
+              >
                 <div className="flex items-center gap-3 text-base w-full">
                   <LogOut size={16} />
                   <span>Logout</span>

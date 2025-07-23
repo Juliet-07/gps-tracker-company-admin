@@ -84,7 +84,7 @@ const Dashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm mb-1">All vehicles</p>
+              <p className="text-gray-600 text-sm mb-1">All Devices</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
                 <span className="text-3xl font-bold text-gray-800">47</span>
@@ -99,7 +99,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="mt-4 bg-gray-100 p-3 rounded">
-            <p className="text-sm font-medium text-gray-700">Total Vehicles</p>
+            <p className="text-sm font-medium text-gray-700">Total Devices</p>
           </div>
         </div>
 
@@ -217,7 +217,7 @@ const Dashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">
-              Vehicle Driven KM
+              Device Track KM
             </h3>
             <span className="text-gray-600 text-sm">Year 2025</span>
           </div>

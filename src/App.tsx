@@ -12,7 +12,6 @@ import Reports from "./pages/Reports";
 import Geofences from "./pages/Geofences";
 import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
-import ProfileSettings from "./pages/ProfileSettings";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -25,9 +24,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/home" element={<Dashboard />} />
             <Route path="/map" element={<Map />} />
             <Route path="/users" element={<Users />} />
             <Route path="/devices" element={<Devices />} />
@@ -35,7 +34,6 @@ const App = () => (
             <Route path="/geofences" element={<Geofences />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/notifications" element={<NotificationSettings />} />
-            <Route path="/settings/profile" element={<ProfileSettings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

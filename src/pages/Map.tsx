@@ -224,7 +224,7 @@ const Map = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Live Map View</h1>
             <p className="text-gray-600 mt-1">
-              Track and monitor vehicles in real-time
+              Track and monitor devices in real-time
             </p>
           </div>
         </div>
