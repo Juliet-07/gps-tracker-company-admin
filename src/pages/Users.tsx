@@ -1,4 +1,6 @@
 import { useState } from "react";
+import axiosInstance from "@/api/axios";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Edit, Car, Trash2 } from "lucide-react";
@@ -19,13 +21,34 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AddUserModal from "@/components/users/AddUserModal";
+import AssignDevice from "@/components/users/AssignDeviceModal";
 import NoUsersFound from "@/components/users/NoUsersFound";
 
 const Users = () => {
+  const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Users");
 
+  const fetchUsers = async () => {
+    const res = await axiosInstance.get(`${apiURL}/users`, {
+      withCredentials: true,
+    });
+    console.log(res.data, "response");
+    return res.data;
+  };
+
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+    staleTime: 5 * 60 * 1000,
+  });
   // Extended sample users data
   const allUsers = [
     {
@@ -146,13 +169,23 @@ const Users = () => {
             </SelectContent>
           </Select>
         </div>
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary hover:bg-primary/90"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add User
-        </Button>
+        <div className="space-x-4">
+          {" "}
+          <Button
+            onClick={() => setIsDeviceModalOpen(true)}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Assign Device
+          </Button>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-green-600 hover:bg-primary/90"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
+        </div>
       </div>
 
       {filteredUsers.length === 0 ? (
@@ -178,9 +211,9 @@ const Users = () => {
                     <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Role
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Assigned Devices
-                    </TableHead>
+                    </TableHead> */}
                     <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </TableHead>
@@ -223,9 +256,9 @@ const Users = () => {
                           {user.role}
                         </span>
                       </TableCell>
-                      <TableCell className="px-6 py-4 text-sm text-gray-900">
+                      {/* <TableCell className="px-6 py-4 text-sm text-gray-900">
                         {user.assignedDevices}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className="px-6 py-4">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(
@@ -243,13 +276,6 @@ const Users = () => {
                             className="text-primary hover:text-primary/90"
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-yellow-600 hover:text-yellow-700"
-                          >
-                            <Car className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -292,6 +318,10 @@ const Users = () => {
       <AddUserModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+      <AssignDevice
+        isOpen={isDeviceModalOpen}
+        onClose={() => setIsDeviceModalOpen(false)}
       />
     </div>
   );

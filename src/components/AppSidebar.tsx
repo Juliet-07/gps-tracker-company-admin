@@ -100,13 +100,12 @@ const AppSidebar = () => {
         <SidebarHeader className="p-4 border-b border-white/20 bg-primary [&[data-mobile=true]]:bg-white [&[data-mobile=true]]:border-gray-200">
           <div className="flex items-center justify-between">
             <Link
-              to="/"
+              to="/home"
               className="flex items-center space-x-2"
               onClick={handleMobileNavClick}
             >
-              <Wind className="h-7 w-7 text-white [&[data-mobile=true]]:text-white" />
               {(!isCollapsed || isMobile) && (
-                <img src={Logo_White} className="w-[100px]" />
+                <img src={Logo_White} className="w-[150px]" />
               )}
             </Link>
             {isMobile && (

@@ -1,30 +1,21 @@
-import { Link } from "react-router-dom";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
+import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "@/api/axios";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
-  Wind,
-  Search,
   Bell,
   LogOut,
-  Globe,
-  Building2,
   Users,
-  LineChart,
   Settings,
   Home,
   MapPin,
-  Route,
   Car,
   BarChart3,
   Shield,
-  Truck,
-  Navigation,
   AlertTriangle,
   CheckCircle,
   Clock,
-  X,
 } from "lucide-react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import {
@@ -38,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo_Black from "../assets/logo_black.jpg";
 
 const Header = () => {
+  const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
   const { state } = useSidebar();
   const navigate = useNavigate();
   const isSidebarCollapsed = state === "collapsed";
@@ -49,53 +41,6 @@ const Header = () => {
   };
   const primaryRole = "Administrator";
   const userRoles = ["Administrator", "Editor"];
-
-  // Admin-focused notifications data
-  const notifications = [
-    {
-      id: 1,
-      type: "alert",
-      title: "New Company Registration",
-      message:
-        "Transport Solutions Ltd has submitted registration for approval",
-      time: "5 min ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      type: "warning",
-      title: "Admin Access Request",
-      message: "John Smith requested admin access for Metro Transport",
-      time: "12 min ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      type: "success",
-      title: "System Backup Completed",
-      message: "Daily system backup completed successfully at 02:00 AM",
-      time: "3 hours ago",
-      unread: false,
-    },
-    {
-      id: 4,
-      type: "info",
-      title: "User Account Created",
-      message: "New user account approved for Global Logistics Company",
-      time: "5 hours ago",
-      unread: false,
-    },
-    {
-      id: 5,
-      type: "alert",
-      title: "License Expiry Warning",
-      message: "Tech Corp's GPS tracking license expires in 7 days",
-      time: "6 hours ago",
-      unread: false,
-    },
-  ];
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -132,6 +77,29 @@ const Header = () => {
     console.log("Clearing all notifications");
   };
 
+  const fetchAllData = async () => {
+    const [devicesRes, usersRes, notificationsRes] = await Promise.all([
+      axiosInstance.get(`${apiURL}/devices`, { withCredentials: true }),
+      axiosInstance.get(`${apiURL}/users`, { withCredentials: true }),
+      axiosInstance.get(`${apiURL}/notifications`, { withCredentials: true }),
+    ]);
+    return {
+      devices: devicesRes.data,
+      users: usersRes.data,
+      notifications: notificationsRes.data,
+    };
+  };
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["all-data"],
+    queryFn: fetchAllData,
+    staleTime: 5 * 60 * 1000,
+  });
+  const devices = data?.devices ?? [];
+  const users = data?.users ?? [];
+  const notifications = data?.notifications ?? [];
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
   return (
     <header className="bg-white text-gray-800 px-4 md:px-6 py-3 border-b sticky top-0 z-40">
       <div className="flex items-center justify-between">
@@ -146,16 +114,6 @@ const Header = () => {
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* <Link to="/search" className="relative hidden lg:block">
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="bg-gray-100 text-gray-900 placeholder-gray-500 rounded-lg w-64 border-0 focus-visible:ring-primary cursor-pointer"
-              readOnly
-            />
-            <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-          </Link> */}
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -197,46 +155,52 @@ const Header = () => {
               </div>
 
               <div className="max-h-96 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <DropdownMenuItem
-                    key={notification.id}
-                    className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0"
-                  >
-                    <div className="flex items-start gap-3 w-full">
-                      <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <h4
-                            className={`text-sm font-medium ${
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-sm text-center text-gray-500">
+                    No new notifications
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0"
+                    >
+                      <div className="flex items-start gap-3 w-full">
+                        <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <h4
+                              className={`text-sm font-medium ${
+                                notification.unread
+                                  ? "text-gray-900"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {notification.title}
+                            </h4>
+                            {notification.unread && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                            )}
+                          </div>
+                          <p
+                            className={`text-xs mt-1 ${
                               notification.unread
-                                ? "text-gray-900"
-                                : "text-gray-600"
+                                ? "text-gray-700"
+                                : "text-gray-500"
                             }`}
                           >
-                            {notification.title}
-                          </h4>
-                          {notification.unread && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                          )}
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {notification.time}
+                          </p>
                         </div>
-                        <p
-                          className={`text-xs mt-1 ${
-                            notification.unread
-                              ? "text-gray-700"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {notification.time}
-                        </p>
                       </div>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                    </DropdownMenuItem>
+                  ))
+                )}
               </div>
 
               <div className="p-3 border-t">
@@ -274,7 +238,9 @@ const Header = () => {
                       +{userRoles.length - 1} more role{userRoles.length > 2 ? 's' : ''}
                     </p>
                   )} */}
-                  <p className="text-sm text-gray-500">47 users • 32 devices</p>
+                  <p className="text-sm text-gray-500">
+                    {users?.length} users • {devices?.length} devices
+                  </p>
                 </div>
               </div>
 

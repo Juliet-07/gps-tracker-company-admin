@@ -44,6 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { toast, ToastContainer } from "react-toastify";
+import moment from "moment";
 
 const Devices = () => {
   const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
@@ -188,7 +189,7 @@ const Devices = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["industries"],
+    queryKey: ["devices"],
     queryFn: fetchDevices,
     staleTime: 5 * 60 * 1000,
   });
@@ -209,6 +210,24 @@ const Devices = () => {
     offline: devices.filter((d) => d.status === "offline").length,
     maintenance: devices.filter((d) => d.status === "maintenance").length,
   };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "online":
+        return "bg-green-100 text-green-800";
+      case "offline":
+        return "bg-red-100 text-red-800";
+      case "maintenance":
+        return "bg-yellow-100 text-yellow-800";
+      case "inactive":
+        return "bg-gray-100 text-gray-700";
+      case "error":
+        return "bg-orange-100 text-orange-800";
+      default:
+        return "bg-blue-100 text-blue-800";
+    }
+  };
+
   return (
     <>
       <ToastContainer />
@@ -402,12 +421,15 @@ const Devices = () => {
                           {device.model}
                         </TableCell>
                         <TableCell>
-                          <Badge className={device.statusColor}>
-                            {device.status}
+                          <Badge className={getStatusColor(device.status)}>
+                            {device.status.charAt(0).toUpperCase() +
+                              device.status.slice(1)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-gray-500">
-                          {device.lastUpdate}
+                          {moment(device.lastUpdate).format(
+                            "D MMMM, YYYY. h:mm A"
+                          )}
                         </TableCell>
                         {/* <TableCell>
                           <div className="flex flex-wrap gap-1">

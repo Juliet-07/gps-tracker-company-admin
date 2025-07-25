@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -29,12 +30,19 @@ import {
   Shapes,
   Cog,
 } from "lucide-react";
+import axiosInstance from "@/api/axios";
+import { blob } from "stream/consumers";
 
 const Reports = () => {
+  const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
   const [reportType, setReportType] = useState("");
   const [device, setDevice] = useState("");
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [fromDate, setFromDate] = useState("2025-06-01");
   const [toDate, setToDate] = useState("2025-06-14");
+  const [generatedReports, setGeneratedReports] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
 
   const reportCards = [
     {
@@ -81,28 +89,28 @@ const Reports = () => {
       bgColor: "bg-danger",
       stats: "Last 7 days: 8 violations",
     },
-    {
-      id: "geofence-report",
-      title: "Geofence Reports",
-      subtitle: "Zone entry/exit events",
-      description:
-        "Track geofence violations including entry and exit times from designated areas.",
-      icon: Shapes,
-      iconColor: "text-purple-500",
-      bgColor: "bg-purple-500",
-      stats: "Last 7 days: 12 events",
-    },
-    {
-      id: "custom-report",
-      title: "Custom Reports",
-      subtitle: "Build your own report",
-      description:
-        "Create custom reports with specific parameters and data points tailored to your needs.",
-      icon: Cog,
-      iconColor: "text-indigo-500",
-      bgColor: "bg-indigo-500",
-      stats: "Templates: 5 saved",
-    },
+    // {
+    //   id: "geofence-report",
+    //   title: "Geofence Reports",
+    //   subtitle: "Zone entry/exit events",
+    //   description:
+    //     "Track geofence violations including entry and exit times from designated areas.",
+    //   icon: Shapes,
+    //   iconColor: "text-purple-500",
+    //   bgColor: "bg-purple-500",
+    //   stats: "Last 7 days: 12 events",
+    // },
+    // {
+    //   id: "custom-report",
+    //   title: "Custom Reports",
+    //   subtitle: "Build your own report",
+    //   description:
+    //     "Create custom reports with specific parameters and data points tailored to your needs.",
+    //   icon: Cog,
+    //   iconColor: "text-indigo-500",
+    //   bgColor: "bg-indigo-500",
+    //   stats: "Templates: 5 saved",
+    // },
   ];
 
   const recentReports = [
@@ -138,6 +146,82 @@ const Reports = () => {
     },
   ];
 
+  const reportTypeMap: Record<string, string> = {
+    trip: "trips",
+    stop: "stops",
+    history: "history",
+    overspeed: "overspeed",
+    geofence: "geofence",
+  };
+
+  const fetchDevices = async () => {
+    const res = await axiosInstance.get(`${apiURL}/devices`, {
+      withCredentials: true,
+    });
+    console.log(res.data, "response");
+    return res.data;
+  };
+
+  const {
+    data: devices = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["industries"],
+    queryFn: fetchDevices,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleGenerateReport = async () => {
+    const deviceId = selectedDevice.id;
+    try {
+      if (!reportType || !deviceId) {
+        alert("Please select a report type and device.");
+        return;
+      }
+
+      const typePath = reportTypeMap[reportType];
+      const from = new Date(fromDate).toISOString();
+      const to = new Date(toDate).toISOString();
+
+      const url = `${apiURL}/reports/${typePath}?deviceId=${deviceId}&from=${from}&to=${to}`;
+      const response = await axiosInstance.get(url, {
+        responseType: "blob",
+        headers: {
+          Accept: "*/*",
+        },
+        withCredentials: true,
+      });
+      const file = response.data;
+      const text = await file.text();
+      console.log("Generated report:", file);
+      console.log("Generated report text:", text);
+      const fileBlob = new Blob([file], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const fileUrl = URL.createObjectURL(fileBlob);
+
+      alert("Report generated successfully!");
+      setIsModalOpen(true);
+      setPreviewUrl(fileUrl);
+
+      //Update state or UI with `data`
+      const generatedReport = {
+        type: typePath,
+        device: selectedDevice.name,
+        dateRange: `${from} - ${to}`,
+        generated: new Date().toLocaleString(),
+        status: "Success",
+        statusColor: "bg-green-500",
+      };
+      // setGeneratedReports(generatedReport);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      alert("Failed to generate report. Please try again.");
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col">
       <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
@@ -145,13 +229,14 @@ const Reports = () => {
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">Reports</h1>
             <p className="text-gray-600 text-sm">
-              Generate comprehensive reports for your fleet
+              Generate comprehensive reports for your devices
             </p>
           </div>
         </div>
       </header>
 
       <main className="flex-1 p-4 md:p-6">
+        {/* Report Generator */}
         <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm mb-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Report Filters
@@ -173,7 +258,7 @@ const Reports = () => {
                   <SelectItem value="stop">Stop Report</SelectItem>
                   <SelectItem value="history">History Report</SelectItem>
                   <SelectItem value="overspeed">Overspeed Report</SelectItem>
-                  <SelectItem value="geofence">Geofence Report</SelectItem>
+                  {/* <SelectItem value="geofence">Geofence Report</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>
@@ -184,15 +269,21 @@ const Reports = () => {
               >
                 Device
               </Label>
-              <Select value={device} onValueChange={setDevice}>
+              <Select
+                onValueChange={(value) => {
+                  const device = devices.find((d) => d.id === value);
+                  setSelectedDevice(device);
+                }}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select device" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Devices</SelectItem>
-                  <SelectItem value="vehicle-001">Vehicle 001</SelectItem>
-                  <SelectItem value="vehicle-002">Vehicle 002</SelectItem>
-                  <SelectItem value="vehicle-003">Vehicle 003</SelectItem>
+                  {devices.map((device) => (
+                    <SelectItem key={device.id} value={device.id}>
+                      {device.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -227,15 +318,18 @@ const Reports = () => {
               />
             </div>
             <div className="flex items-end">
-              <Button className="w-full bg-primary text-white hover:bg-indigo-700">
+              <Button
+                onClick={handleGenerateReport}
+                className="w-full bg-primary text-white hover:bg-indigo-700"
+              >
                 <ChartBar className="mr-2 h-4 w-4" />
                 Generate Report
               </Button>
             </div>
           </div>
         </div>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        {/* Report Types */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           {reportCards.map((card) => {
             const IconComponent = card.icon;
             return (
@@ -268,12 +362,12 @@ const Reports = () => {
             );
           })}
         </div>
-
-        <div className="hidden md:block bg-white rounded-lg shadow-sm">
+        {/* Generated Reports */}
+        {/* <div className="hidden md:block bg-white rounded-lg shadow-sm">
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-800">
-                Recent Reports
+                Generated Reports
               </h3>
               <Button
                 variant="link"
@@ -363,7 +457,28 @@ const Reports = () => {
               </TableBody>
             </Table>
           </div>
-        </div>
+        </div> */}
+        {/* Report Preview */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white w-full max-w-4xl h-[90vh] rounded-lg overflow-hidden shadow-lg relative">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-lg font-semibold">Report Preview</h2>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-600 hover:text-black"
+                >
+                  ✕
+                </button>
+              </div>
+              <iframe
+                src={previewUrl}
+                className="w-full h-full"
+                frameBorder="0"
+              />
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -87,7 +87,7 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">All Devices</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">47</span>
+                <span className="text-3xl font-bold text-gray-800">4</span>
               </div>
             </div>
             <div className="w-16 h-12">
@@ -110,12 +110,12 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">Currently</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">32</span>
+                <span className="text-3xl font-bold text-gray-800">4</span>
               </div>
             </div>
           </div>
           <div className="mt-4 bg-green-500 text-white p-3 rounded text-center">
-            <p className="text-sm font-medium">68% Running</p>
+            <p className="text-sm font-medium">25% Active</p>
           </div>
         </div>
 
@@ -126,12 +126,12 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">Currently</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">8</span>
+                <span className="text-3xl font-bold text-gray-800">3</span>
               </div>
             </div>
           </div>
           <div className="mt-4 bg-yellow-500 text-white p-3 rounded text-center">
-            <p className="text-sm font-medium">17% Idle</p>
+            <p className="text-sm font-medium">75% Idle</p>
           </div>
         </div>
 
