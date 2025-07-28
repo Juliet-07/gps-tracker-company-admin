@@ -148,7 +148,7 @@ const Users = () => {
 
       <div className="flex justify-between items-stretch md:items-center mb-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="relative">
+          {/* <div className="relative">
             <Input
               type="text"
               placeholder="Search users..."
@@ -167,7 +167,7 @@ const Users = () => {
               <SelectItem value="Active">Active</SelectItem>
               <SelectItem value="Inactive">Inactive</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
         <div className="space-x-4">
           {" "}
@@ -193,10 +193,20 @@ const Users = () => {
       ) : (
         <>
           <div className="bg-white rounded-lg shadow-sm overflow-hidden hidden md:block">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="md:text-lg font-semibold text-gray-800">
                 Users List
               </h3>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-64"
+                />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table>

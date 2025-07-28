@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import axiosInstance from "@/api/axios";
 import { useQuery } from "@tanstack/react-query";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -30,19 +31,18 @@ import {
   Shapes,
   Cog,
 } from "lucide-react";
-import axiosInstance from "@/api/axios";
-import { blob } from "stream/consumers";
+import * as XLSX from "xlsx";
 
 const Reports = () => {
   const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
   const [reportType, setReportType] = useState("");
   const [device, setDevice] = useState("");
   const [selectedDevice, setSelectedDevice] = useState(null);
-  const [fromDate, setFromDate] = useState("2025-06-01");
-  const [toDate, setToDate] = useState("2025-06-14");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [generatedReports, setGeneratedReports] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
   const reportCards = [
     {
@@ -149,9 +149,7 @@ const Reports = () => {
   const reportTypeMap: Record<string, string> = {
     trip: "trips",
     stop: "stops",
-    history: "history",
-    overspeed: "overspeed",
-    geofence: "geofence",
+    summary: "summary",
   };
 
   const fetchDevices = async () => {
@@ -193,35 +191,39 @@ const Reports = () => {
         },
         withCredentials: true,
       });
-      const file = response.data;
-      const text = await file.text();
-      console.log("Generated report:", file);
-      console.log("Generated report text:", text);
-      const fileBlob = new Blob([file], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const fileUrl = URL.createObjectURL(fileBlob);
-
       alert("Report generated successfully!");
-      setIsModalOpen(true);
-      setPreviewUrl(fileUrl);
+      const blob = response.data;
+      // Download in Excel;
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `route-history-${deviceId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
 
-      //Update state or UI with `data`
-      const generatedReport = {
-        type: typePath,
-        device: selectedDevice.name,
-        dateRange: `${from} - ${to}`,
-        generated: new Date().toLocaleString(),
-        status: "Success",
-        statusColor: "bg-green-500",
-      };
-      // setGeneratedReports(generatedReport);
+      const arrayBuffer = await blob.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+
+      const worksheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[worksheetName];
+
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 7 });
+      setGeneratedReports(jsonData);
+      console.log(jsonData, "checking the data");
+      console.log(Object.keys(jsonData[0]));
     } catch (error) {
       console.error("Error generating report:", error);
       alert("Failed to generate report. Please try again.");
     }
   };
 
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = generatedReports.slice(indexOfFirstRow, indexOfLastRow);
+
+  const totalPages = Math.ceil(generatedReports.length / rowsPerPage);
   return (
     <div className="flex-1 flex flex-col">
       <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
@@ -256,9 +258,7 @@ const Reports = () => {
                 <SelectContent>
                   <SelectItem value="trip">Trip Report</SelectItem>
                   <SelectItem value="stop">Stop Report</SelectItem>
-                  <SelectItem value="history">History Report</SelectItem>
-                  <SelectItem value="overspeed">Overspeed Report</SelectItem>
-                  {/* <SelectItem value="geofence">Geofence Report</SelectItem> */}
+                  <SelectItem value="summary">Summary Report</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -328,154 +328,86 @@ const Reports = () => {
             </div>
           </div>
         </div>
-        {/* Report Types */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {reportCards.map((card) => {
-            const IconComponent = card.icon;
-            return (
-              <div
-                key={card.id}
-                className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
-              >
-                <div className="flex items-center mb-4">
-                  <div
-                    className={`w-12 h-12 ${card.bgColor} bg-opacity-10 rounded-lg flex items-center justify-center mr-4`}
-                  >
-                    <IconComponent
-                      className={`${card.iconColor} text-xl`}
-                      size={24}
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {card.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm">{card.subtitle}</p>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">{card.description}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">{card.stats}</span>
-                  <ArrowRight className="text-primary" size={16} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
         {/* Generated Reports */}
-        {/* <div className="hidden md:block bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Generated Reports
+        {generatedReports.length === 0 ? (
+          <div className="bg-white shadow rounded-lg p-6 text-center my-4">
+            <p className="text-gray-500">No report generated.</p>
+          </div>
+        ) : (
+          <div className="bg-white shadow overflow-x-auto sm:rounded-lg my-10">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                {reportTypeMap[reportType]?.replace(/^\w/, (c) =>
+                  c.toUpperCase()
+                )}{" "}
+                Report &mdash;{" "}
+                <span className="text-gray-600">
+                  {generatedReports.length} records
+                </span>
               </h3>
-              <Button
-                variant="link"
-                className="text-primary hover:text-indigo-700 text-sm font-medium p-0"
-              >
-                View All
-              </Button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Report Type
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Device
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date Range
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Generated
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentReports.map((report, index) => {
-                  const IconComponent = report.icon;
-                  return (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <IconComponent
-                            className={`${report.iconColor} mr-2`}
-                            size={16}
-                          />
-                          <span className="text-sm font-medium text-gray-900">
-                            {report.type}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-900">
-                        {report.device}
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-900">
-                        {report.dateRange}
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-900">
-                        {report.generated}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${report.statusColor} text-white text-xs`}
-                        >
-                          {report.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-primary hover:text-indigo-700 p-1"
+
+              <div className="w-full overflow-x-auto">
+                <table className="min-w-full text-sm md:text-base divide-y divide-gray-200 overflow-x-auto">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {Object.keys(generatedReports[0])
+                        // .filter((key) => !excludedFields.includes(key))
+                        .map((key) => (
+                          <th
+                            key={key}
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
-                            <Download size={16} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-400 hover:text-gray-600 p-1"
-                          >
-                            <Eye size={16} />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </div> */}
-        {/* Report Preview */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white w-full max-w-4xl h-[90vh] rounded-lg overflow-hidden shadow-lg relative">
-              <div className="flex justify-between items-center p-4 border-b">
-                <h2 className="text-lg font-semibold">Report Preview</h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-600 hover:text-black"
-                >
-                  ✕
-                </button>
+                            {key}
+                          </th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {currentRows.map((row, index) => (
+                      <tr
+                        key={index}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        {Object.entries(row)
+                          // .filter(([key]) => !excludedFields.includes(key))
+                          .map(([_, value], cellIndex) => (
+                            <td
+                              key={cellIndex}
+                              className="px-4 md:px-6 py-2 md:py-4 whitespace-nowrap text-gray-900"
+                            >
+                              {value?.toString().slice(0, 60) || "-"}
+                            </td>
+                          ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <div className="md:w-[300px] mt-6 flex justify-center items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      Prev
+                    </Button>
+
+                    <span className="text-sm text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </table>
               </div>
-              <iframe
-                src={previewUrl}
-                className="w-full h-full"
-                frameBorder="0"
-              />
             </div>
           </div>
         )}

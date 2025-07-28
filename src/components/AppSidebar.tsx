@@ -23,6 +23,7 @@ import {
   Shield,
   LogOut,
   X,
+  MapPinCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,15 +58,20 @@ const navItems = [
     href: "/devices",
   },
   {
+    icon: MapPinCheck,
+    label: "Route History",
+    href: "/route-history",
+  },
+  {
     icon: BarChart3,
     label: "Reports",
     href: "/reports",
   },
-  // {
-  //   icon: MapPin,
-  //   label: "Geofences",
-  //   href: "/geofences",
-  // },
+  {
+    icon: MapPin,
+    label: "Geofences",
+    href: "/geofences",
+  },
   {
     icon: Settings,
     label: "Settings",

@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
+import RouteHistory from "./pages/RouteHistory";
 
 const queryClient = new QueryClient();
 
@@ -31,9 +32,13 @@ const App = () => (
             <Route path="/users" element={<Users />} />
             <Route path="/devices" element={<Devices />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/route-history" element={<RouteHistory />} />
             <Route path="/geofences" element={<Geofences />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/settings/notifications" element={<NotificationSettings />} />
+            <Route
+              path="/settings/notifications"
+              element={<NotificationSettings />}
+            />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

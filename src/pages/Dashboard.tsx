@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+import axiosInstance from "@/api/axios";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Car, Map, ChartBar } from "lucide-react";
 import {
@@ -15,9 +18,28 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
-import { Link } from "react-router-dom";
 
 const Dashboard = () => {
+  const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
+
+  const fetchUsers = async () => {
+    const res = await axiosInstance.get(`${apiURL}/devices`, {
+      withCredentials: true,
+    });
+    console.log(res.data, "response");
+    return res.data;
+  };
+
+  const {
+    data: devices = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+    staleTime: 5 * 60 * 1000,
+  });
   // Sample data for Vehicle Driven KM chart with high values
   const drivenKmData = [
     { date: "05 Jun", km: 245 },
@@ -76,6 +98,19 @@ const Dashboard = () => {
     },
   };
 
+  const totalDevices = devices.length;
+
+  const onlineDevices = devices.filter((d) => d.status === "online").length;
+  const offlineDevices = devices.filter((d) => d.status === "offline").length;
+  const idleDevices = devices.filter((d) => d.status === "idle").length;
+
+  const getPercentage = (count: number) =>
+    totalDevices > 0 ? Math.round((count / totalDevices) * 100) : 0;
+
+  const onlinePercent = getPercentage(onlineDevices);
+  const offlinePercent = getPercentage(offlineDevices);
+  const idlePercent = getPercentage(idleDevices);
+
   return (
     <div className="flex-1 p-6">
       {/* Metrics Grid */}
@@ -87,7 +122,9 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">All Devices</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">4</span>
+                <span className="text-3xl font-bold text-gray-800">
+                  {totalDevices}
+                </span>
               </div>
             </div>
             <div className="w-16 h-12">
@@ -110,12 +147,14 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">Currently</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">4</span>
+                <span className="text-3xl font-bold text-gray-800">
+                  {onlineDevices}
+                </span>
               </div>
             </div>
           </div>
           <div className="mt-4 bg-green-500 text-white p-3 rounded text-center">
-            <p className="text-sm font-medium">25% Active</p>
+            <p className="text-sm font-medium">{onlinePercent}% Active</p>
           </div>
         </div>
 
@@ -126,12 +165,14 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">Currently</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">3</span>
+                <span className="text-3xl font-bold text-gray-800">
+                  {idleDevices}
+                </span>
               </div>
             </div>
           </div>
           <div className="mt-4 bg-yellow-500 text-white p-3 rounded text-center">
-            <p className="text-sm font-medium">75% Idle</p>
+            <p className="text-sm font-medium">{idlePercent}% Idle</p>
           </div>
         </div>
 
@@ -142,12 +183,14 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mb-1">Currently</p>
               <div className="flex items-center">
                 <Car className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-3xl font-bold text-gray-800">7</span>
+                <span className="text-3xl font-bold text-gray-800">
+                  {offlineDevices}
+                </span>
               </div>
             </div>
           </div>
           <div className="mt-4 bg-red-500 text-white p-3 rounded text-center">
-            <p className="text-sm font-medium">15% Stop</p>
+            <p className="text-sm font-medium">{offlinePercent}% Stop</p>
           </div>
         </div>
       </div>
