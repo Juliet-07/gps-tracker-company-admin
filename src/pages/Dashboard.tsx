@@ -22,11 +22,11 @@ import {
 const Dashboard = () => {
   const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
 
-  const fetchUsers = async () => {
+  const fetchDevices = async () => {
     const res = await axiosInstance.get(`${apiURL}/devices`, {
       withCredentials: true,
     });
-    console.log(res.data, "response");
+    console.log(res.data, "response for devices");
     return res.data;
   };
 
@@ -36,8 +36,8 @@ const Dashboard = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryKey: ["devices", "devices-card"],
+    queryFn: fetchDevices,
     staleTime: 5 * 60 * 1000,
   });
   // Sample data for Vehicle Driven KM chart with high values

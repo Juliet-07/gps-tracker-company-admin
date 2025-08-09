@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axiosInstance from "@/api/axios";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,62 +51,12 @@ const Devices = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
-  const [showAlert, setShowAlert] = useState(true);
   const { handleSubmit } = useForm();
   const [loading, setLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deviceToEdit, setDeviceToEdit] = useState(null);
 
-  const sampleDevices = [
-    {
-      id: 1,
-      name: "GPS-001",
-      imei: "356307042637821",
-      vehicle: "ABC-123",
-      status: "Online",
-      lastUpdate: "2 minutes ago",
-      geofences: ["Office Area", "Warehouse Zone"],
-      statusColor: "bg-green-100 text-green-800",
-    },
-    {
-      id: 2,
-      name: "GPS-002",
-      imei: "356307042637822",
-      vehicle: "XYZ-456",
-      status: "Offline",
-      lastUpdate: "1 hour ago",
-      geofences: ["Service Area"],
-      statusColor: "bg-red-100 text-red-800",
-    },
-    {
-      id: 3,
-      name: "GPS-003",
-      imei: "356307042637823",
-      vehicle: "DEF-789",
-      status: "Online",
-      lastUpdate: "5 minutes ago",
-      geofences: ["Office Area"],
-      statusColor: "bg-green-100 text-green-800",
-    },
-    {
-      id: 4,
-      name: "GPS-004",
-      imei: "356307042637824",
-      vehicle: "GHI-012",
-      status: "Maintenance",
-      lastUpdate: "3 days ago",
-      geofences: [],
-      statusColor: "bg-yellow-100 text-yellow-800",
-    },
-    {
-      id: 5,
-      name: "GPS-005",
-      imei: "356307042637825",
-      vehicle: "JKL-345",
-      status: "Online",
-      lastUpdate: "1 minute ago",
-      geofences: ["Warehouse Zone", "Service Area"],
-      statusColor: "bg-green-100 text-green-800",
-    },
-  ];
+  const queryClient = useQueryClient();
 
   const initialValue = {
     name: "",
@@ -176,9 +126,7 @@ const Devices = () => {
   };
 
   const fetchDevices = async () => {
-    const res = await axiosInstance.get(`${apiURL}/devices`, {
-      withCredentials: true,
-    });
+    const res = await axiosInstance.get(`/devices`);
     console.log(res.data, "response");
     return res.data;
   };
@@ -189,7 +137,7 @@ const Devices = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["devices"],
+    queryKey: ["devices", "devices-table"],
     queryFn: fetchDevices,
     staleTime: 5 * 60 * 1000,
   });
@@ -227,7 +175,52 @@ const Devices = () => {
         return "bg-blue-100 text-blue-800";
     }
   };
+  const handleEditDeviceClick = (device) => {
+    setDeviceToEdit(device);
+    setFormData({ ...device });
+    setIsEditModalOpen(true);
+  };
 
+  const handleUpdateDevice = async () => {
+    if (!deviceToEdit) return;
+
+    try {
+      setLoading(true);
+      const url = `${apiURL}/devices/${deviceToEdit.id}`;
+
+      const payload = {
+        ...deviceToEdit,
+        ...formData,
+      };
+
+      await axiosInstance.put(url, payload, { withCredentials: true });
+
+      toast.success("Device updated successfully");
+      setIsEditModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["devices", "devices-table"] });
+    } catch (err: any) {
+      const message = err?.response?.data?.message || "Something went wrong";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDevice = async (id: string, name: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${name}?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await axiosInstance.delete(`/devices/${id}`);
+      queryClient.invalidateQueries({
+        queryKey: ["devices", "devices-table"],
+      });
+    } catch (error) {
+      console.error("Error deleting company:", error);
+    }
+  };
   return (
     <>
       <ToastContainer />
@@ -463,6 +456,7 @@ const Devices = () => {
                               variant="ghost"
                               size="icon"
                               className="text-yellow-600 hover:text-yellow-900 h-8 w-8"
+                              onClick={() => handleEditDeviceClick(device)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -470,6 +464,9 @@ const Devices = () => {
                               variant="ghost"
                               size="icon"
                               className="text-red-600 hover:text-red-900 h-8 w-8"
+                              onClick={() =>
+                                handleDeleteDevice(device.id, device.name)
+                              }
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
@@ -484,6 +481,7 @@ const Devices = () => {
           </div>
         </main>
 
+        {/* ADD DEVICES */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="w-full max-w-md">
             <DialogHeader>
@@ -597,6 +595,129 @@ const Devices = () => {
                   className="flex-1 bg-primary hover:bg-primary/90"
                 >
                   {loading ? "Submitting..." : "Add Device"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* EDIT DEVICES */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="w-full max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Device</DialogTitle>
+            </DialogHeader>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleUpdateDevice();
+              }}
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Device Name
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter device name"
+                  className="w-full"
+                  name="name"
+                  value={name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  IMEI Number
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter IMEI number"
+                  className="w-full"
+                  name="uniqueId"
+                  value={uniqueId}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Device Model
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter device model"
+                  className="w-full"
+                  name="model"
+                  value={model}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter phone number"
+                  className="w-full"
+                  name="phone"
+                  value={phone}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Device Category
+                </label>
+                <Select
+                  required
+                  value={category}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, category: value }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Animal">Animal</SelectItem>
+                    <SelectItem value="Bicycle">Bicycle</SelectItem>
+                    <SelectItem value="Boat">Boat</SelectItem>
+                    <SelectItem value="Bus">Bus</SelectItem>
+                    <SelectItem value="Car">Car</SelectItem>
+                    <SelectItem value="Camper">Camper</SelectItem>
+                    <SelectItem value="Crane">Crane</SelectItem>
+                    <SelectItem value="Helicopter">Helicopter</SelectItem>
+                    <SelectItem value="Motorcycle">Motorcycle</SelectItem>
+                    <SelectItem value="Person">Person</SelectItem>
+                    <SelectItem value="Plane">Plane</SelectItem>
+                    <SelectItem value="Ship">Ship</SelectItem>
+                    <SelectItem value="Tractor">Tractor</SelectItem>
+                    <SelectItem value="Trailer">Trailer</SelectItem>
+                    <SelectItem value="Train">Train</SelectItem>
+                    <SelectItem value="Tram">Tram</SelectItem>
+                    <SelectItem value="Truck">Truck</SelectItem>
+                    <SelectItem value="Van">Van</SelectItem>
+                    <SelectItem value="Scooter">Scooter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  {loading ? "Updating..." : "Update Device"}
                 </Button>
               </div>
             </form>

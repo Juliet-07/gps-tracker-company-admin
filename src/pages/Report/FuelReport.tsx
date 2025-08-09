@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axiosInstance from "@/api/axios";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Download, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Select,
@@ -14,16 +14,16 @@ import {
 } from "@/components/ui/select";
 import * as XLSX from "xlsx";
 
-const RouteHistory = () => {
+const FuelReport = () => {
   const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
   const navigate = useNavigate();
   const [selectedDevice, setSelectedDevice] = useState(null);
-  const [fromDate, setFromDate] = useState("2025-07-01");
-  const [toDate, setToDate] = useState("2025-07-01");
-  const [routeData, setRouteData] = useState([]);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [fuelData, setFuelData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
-  const excludedFields = ["Valid", "Attributes"];
+  const excludedFields = ["deviceId"];
 
   const fetchDevices = async () => {
     const res = await axiosInstance.get(`${apiURL}/devices`, {
@@ -55,50 +55,31 @@ const RouteHistory = () => {
     const to = new Date(toDate).toISOString();
 
     try {
-      const url = `${apiURL}/reports/route?deviceId=${deviceId}&from=${from}&to=${to}`;
+      const url = `${apiURL}/reports/fuel?deviceId=${deviceId}&from=${from}&to=${to}`;
       const response = await axiosInstance.get(url, {
-        responseType: "blob",
+        responseType: "json",
         withCredentials: true,
-        headers: {
-          Accept: "*/*",
-        },
       });
 
-      // Download the file
-      const blob = response.data;
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `route-history-${deviceId}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-
-      // Read and extract table data from row 8 onward
-      const arrayBuffer = await blob.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-
-      // Get the first worksheet
-      const worksheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[worksheetName];
-
-      // convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 7 });
-      setRouteData(jsonData);
-      console.log(jsonData, "checking the data");
-      console.log(Object.keys(jsonData[0]));
+      const jsonData = response.data;
+      if (!jsonData || jsonData.length === 0) {
+        alert("No summary data found for the selected filters.");
+        setFuelData([]); // clear any previous data
+        return; // stop further processing
+      }
+      setFuelData(jsonData);
+      // console.log(jsonData, "checking the data");
     } catch (error) {
-      console.error("Error generating route history:", error);
-      alert("Failed to generate history. Please try again.");
+      console.error("Error generating fuel report:", error);
+      alert("Failed to generate fuel report. Please try again.");
     }
   };
 
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  const currentRows = routeData.slice(indexOfFirstRow, indexOfLastRow);
+  const currentRows = fuelData.slice(indexOfFirstRow, indexOfLastRow);
 
-  const totalPages = Math.ceil(routeData.length / rowsPerPage);
+  const totalPages = Math.ceil(fuelData.length / rowsPerPage);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -115,7 +96,7 @@ const RouteHistory = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-2xl font-semibold text-gray-800">
-              Route History
+              Fuel Report
             </h1>
           </div>
         </div>
@@ -180,7 +161,7 @@ const RouteHistory = () => {
                 className="bg-primary text-white hover:bg-blue-600"
               >
                 <Search className="mr-2 h-4 w-4" />
-                Search Route History
+                Get Fuel Report
               </Button>
             </div>
             <div className="block md:hidden self-end">
@@ -189,31 +170,49 @@ const RouteHistory = () => {
                 className="bg-primary text-white hover:bg-blue-600"
               >
                 <Search className="mr-2 h-4 w-4" />
-                Search History
+                Get Fuel Data
               </Button>
             </div>
           </div>
         </div>
 
         {/* History table */}
-        {routeData.length === 0 ? (
+        {fuelData.length === 0 ? (
           <div className="bg-white shadow rounded-lg p-6 text-center my-4">
             <p className="text-gray-500">
-              No route data found for this device in the selected period.
+              No fuel data found for this device in the selected period.
             </p>
           </div>
         ) : (
           <div className="bg-white shadow overflow-x-auto sm:rounded-lg my-10">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                Route Data ({routeData.length} records)
-              </h3>
+              <div className="w-full flex items-center justify-between">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                  Fuel Data ({fuelData.length} records)
+                </h3>
+                <Button
+                  className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => {
+                    const worksheet = XLSX.utils.json_to_sheet(fuelData);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(
+                      workbook,
+                      worksheet,
+                      "Summary"
+                    );
+                    XLSX.writeFile(workbook, "summary-report.xlsx");
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Excel
+                </Button>
+              </div>
 
               <div className="w-full overflow-x-auto">
                 <table className="min-w-full text-sm md:text-base divide-y divide-gray-200 overflow-x-auto">
                   <thead className="bg-gray-50">
                     <tr>
-                      {Object.keys(routeData[0])
+                      {Object.keys(fuelData[0])
                         .filter((key) => !excludedFields.includes(key))
                         .map((key) => (
                           <th
@@ -244,7 +243,7 @@ const RouteHistory = () => {
                       </tr>
                     ))}
                   </tbody>
-                  <div className="md:w-[300px] mt-6 flex justify-center items-center space-x-2">
+                  <div className="w-full my-6 flex justify-end items-center space-x-2">
                     <Button
                       variant="outline"
                       onClick={() =>
@@ -279,4 +278,4 @@ const RouteHistory = () => {
   );
 };
 
-export default RouteHistory;
+export default FuelReport;

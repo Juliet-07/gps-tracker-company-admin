@@ -6,15 +6,17 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Map from "./pages/Map";
-import Users from "./pages/Users";
+import Users from "./pages/User/Users";
 import Devices from "./pages/Devices";
-import Reports from "./pages/Reports";
+import Reports from "./pages/Report/Reports";
+import EventsReport from "./pages/Report/Events";
+import SummaryReport from "./pages/Report/Summary";
+import FuelReport from "./pages/Report/FuelReport";
 import Geofences from "./pages/Geofences";
 import Settings from "./pages/Settings";
 import NotificationSettings from "./pages/NotificationSettings";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
-import RouteHistory from "./pages/RouteHistory";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +34,9 @@ const App = () => (
             <Route path="/users" element={<Users />} />
             <Route path="/devices" element={<Devices />} />
             <Route path="/reports" element={<Reports />} />
-            <Route path="/route-history" element={<RouteHistory />} />
+            <Route path="/reports/events" element={<EventsReport />} />
+            <Route path="/reports/summary" element={<SummaryReport />} />
+            <Route path="/fuel-report" element={<FuelReport />} />
             <Route path="/geofences" element={<Geofences />} />
             <Route path="/settings" element={<Settings />} />
             <Route

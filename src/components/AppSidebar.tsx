@@ -24,6 +24,7 @@ import {
   LogOut,
   X,
   MapPinCheck,
+  Fuel,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -58,9 +59,9 @@ const navItems = [
     href: "/devices",
   },
   {
-    icon: MapPinCheck,
-    label: "Route History",
-    href: "/route-history",
+    icon: Fuel,
+    label: "Fuel Report",
+    href: "/fuel-report",
   },
   {
     icon: BarChart3,

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import axiosInstance from "@/api/axios";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,144 +11,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  ChartBar,
-  Route,
-  Pause,
-  History,
-  Download,
-  Eye,
-  ArrowRight,
-  Shapes,
-  Cog,
-} from "lucide-react";
+import { ChartBar, Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import { Link } from "react-router-dom";
 
 const Reports = () => {
   const apiURL = import.meta.env.VITE_REACT_APP_BASE_URL;
   const [reportType, setReportType] = useState("");
-  const [device, setDevice] = useState("");
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [generatedReports, setGeneratedReports] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
-
-  const reportCards = [
-    {
-      id: "trip-report",
-      title: "Trip Reports",
-      subtitle: "Vehicle journey details",
-      description:
-        "Get detailed information about vehicle trips including start/end points, duration, distance, and route taken.",
-      icon: Route,
-      iconColor: "text-primary",
-      bgColor: "bg-primary",
-      stats: "Last 7 days: 24 trips",
-    },
-    {
-      id: "stop-report",
-      title: "Stop Reports",
-      subtitle: "Vehicle stop analysis",
-      description:
-        "Track vehicle stops, idle time, and parking locations with detailed duration and location information.",
-      icon: Pause,
-      iconColor: "text-warning",
-      bgColor: "bg-warning",
-      stats: "Last 7 days: 156 stops",
-    },
-    {
-      id: "history-report",
-      title: "History Reports",
-      subtitle: "Complete vehicle history",
-      description:
-        "Comprehensive vehicle movement history with timestamps, coordinates, and speed data.",
-      icon: History,
-      iconColor: "text-success",
-      bgColor: "bg-success",
-      stats: "Available data: 30 days",
-    },
-    {
-      id: "overspeed-report",
-      title: "Overspeed Reports",
-      subtitle: "Speed violation events",
-      description:
-        "Monitor speed violations with detailed information about location, duration, and maximum speed reached.",
-      icon: ChartBar,
-      iconColor: "text-danger",
-      bgColor: "bg-danger",
-      stats: "Last 7 days: 8 violations",
-    },
-    // {
-    //   id: "geofence-report",
-    //   title: "Geofence Reports",
-    //   subtitle: "Zone entry/exit events",
-    //   description:
-    //     "Track geofence violations including entry and exit times from designated areas.",
-    //   icon: Shapes,
-    //   iconColor: "text-purple-500",
-    //   bgColor: "bg-purple-500",
-    //   stats: "Last 7 days: 12 events",
-    // },
-    // {
-    //   id: "custom-report",
-    //   title: "Custom Reports",
-    //   subtitle: "Build your own report",
-    //   description:
-    //     "Create custom reports with specific parameters and data points tailored to your needs.",
-    //   icon: Cog,
-    //   iconColor: "text-indigo-500",
-    //   bgColor: "bg-indigo-500",
-    //   stats: "Templates: 5 saved",
-    // },
-  ];
-
-  const recentReports = [
-    {
-      type: "Trip Report",
-      icon: Route,
-      iconColor: "text-primary",
-      device: "Vehicle 001",
-      dateRange: "Jun 01 - Jun 07",
-      generated: "2 hours ago",
-      status: "Completed",
-      statusColor: "bg-success",
-    },
-    {
-      type: "Overspeed Report",
-      icon: ChartBar,
-      iconColor: "text-danger",
-      device: "All Devices",
-      dateRange: "Jun 08 - Jun 14",
-      generated: "5 hours ago",
-      status: "Processing",
-      statusColor: "bg-warning",
-    },
-    {
-      type: "Geofence Report",
-      icon: Shapes,
-      iconColor: "text-purple-500",
-      device: "Vehicle 002",
-      dateRange: "Jun 10 - Jun 14",
-      generated: "1 day ago",
-      status: "Completed",
-      statusColor: "bg-success",
-    },
-  ];
+  const excludedFields = ["Valid", "Attributes"];
 
   const reportTypeMap: Record<string, string> = {
     trip: "trips",
     stop: "stops",
+    event: "events",
+    route: "route",
     summary: "summary",
   };
 
@@ -166,7 +48,7 @@ const Reports = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["industries"],
+    queryKey: ["devices", "devices-table"],
     queryFn: fetchDevices,
     staleTime: 5 * 60 * 1000,
   });
@@ -194,14 +76,14 @@ const Reports = () => {
       alert("Report generated successfully!");
       const blob = response.data;
       // Download in Excel;
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `route-history-${deviceId}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      // const downloadUrl = window.URL.createObjectURL(blob);
+      // const a = document.createElement("a");
+      // a.href = downloadUrl;
+      // a.download = `route-history-${deviceId}.xlsx`;
+      // document.body.appendChild(a);
+      // a.click();
+      // a.remove();
+      // window.URL.revokeObjectURL(downloadUrl);
 
       const arrayBuffer = await blob.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
@@ -212,6 +94,18 @@ const Reports = () => {
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 7 });
       setGeneratedReports(jsonData);
       console.log(jsonData, "checking the data");
+      console.log(Object.keys(jsonData[0]));
+
+      setGeneratedReports(jsonData);
+      console.log(jsonData, "checking the data");
+      // console.log(Object.keys(jsonData[0]));
+      if (!jsonData || jsonData.length === 0) {
+        alert(
+          "No data was found in the generated report. Try a different filter."
+        );
+        return;
+      }
+
       console.log(Object.keys(jsonData[0]));
     } catch (error) {
       console.error("Error generating report:", error);
@@ -228,11 +122,32 @@ const Reports = () => {
     <div className="flex-1 flex flex-col">
       <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Reports</h1>
-            <p className="text-gray-600 text-sm">
-              Generate comprehensive reports for your devices
-            </p>
+          <div className="w-full flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-800">Reports</h1>
+              <p className="text-gray-600 text-sm">
+                Generate comprehensive reports for your devices
+              </p>
+            </div>
+
+            <div className="flex space-x-4">
+              <Link to="/reports/events">
+                <Button
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >
+                  Event Report
+                </Button>
+              </Link>
+              <Link to="/reports/summary">
+                <Button
+                  variant="outline"
+                  className="bg-green-50 text-green-700 hover:bg-green-100"
+                >
+                  Summary Report
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -258,6 +173,8 @@ const Reports = () => {
                 <SelectContent>
                   <SelectItem value="trip">Trip Report</SelectItem>
                   <SelectItem value="stop">Stop Report</SelectItem>
+                  <SelectItem value="event">Events Report</SelectItem>
+                  <SelectItem value="route">Route Report</SelectItem>
                   <SelectItem value="summary">Summary Report</SelectItem>
                 </SelectContent>
               </Select>
@@ -336,22 +253,37 @@ const Reports = () => {
         ) : (
           <div className="bg-white shadow overflow-x-auto sm:rounded-lg my-10">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                {reportTypeMap[reportType]?.replace(/^\w/, (c) =>
-                  c.toUpperCase()
-                )}{" "}
-                Report &mdash;{" "}
-                <span className="text-gray-600">
-                  {generatedReports.length} records
-                </span>
-              </h3>
+              <div className="w-full flex items-center justify-between my-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                  {reportTypeMap[reportType]?.replace(/^\w/, (c) =>
+                    c.toUpperCase()
+                  )}{" "}
+                  Report &mdash;{" "}
+                  <span className="text-gray-600">
+                    {generatedReports.length} records
+                  </span>
+                </h3>
+                <Button
+                  className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => {
+                    const worksheet =
+                      XLSX.utils.json_to_sheet(generatedReports);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+                    XLSX.writeFile(workbook, `${reportType}-report.xlsx`);
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Excel
+                </Button>
+              </div>
 
               <div className="w-full overflow-x-auto">
                 <table className="min-w-full text-sm md:text-base divide-y divide-gray-200 overflow-x-auto">
                   <thead className="bg-gray-50">
                     <tr>
                       {Object.keys(generatedReports[0])
-                        // .filter((key) => !excludedFields.includes(key))
+                        .filter((key) => !excludedFields.includes(key))
                         .map((key) => (
                           <th
                             key={key}
@@ -369,7 +301,7 @@ const Reports = () => {
                         className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                       >
                         {Object.entries(row)
-                          // .filter(([key]) => !excludedFields.includes(key))
+                          .filter(([key]) => !excludedFields.includes(key))
                           .map(([_, value], cellIndex) => (
                             <td
                               key={cellIndex}
