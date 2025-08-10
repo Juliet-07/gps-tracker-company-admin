@@ -29,9 +29,7 @@ const Reports = () => {
   const reportTypeMap: Record<string, string> = {
     trip: "trips",
     stop: "stops",
-    event: "events",
     route: "route",
-    summary: "summary",
   };
 
   const fetchDevices = async () => {
@@ -75,15 +73,6 @@ const Reports = () => {
       });
       alert("Report generated successfully!");
       const blob = response.data;
-      // Download in Excel;
-      // const downloadUrl = window.URL.createObjectURL(blob);
-      // const a = document.createElement("a");
-      // a.href = downloadUrl;
-      // a.download = `route-history-${deviceId}.xlsx`;
-      // document.body.appendChild(a);
-      // a.click();
-      // a.remove();
-      // window.URL.revokeObjectURL(downloadUrl);
 
       const arrayBuffer = await blob.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
@@ -152,7 +141,7 @@ const Reports = () => {
         </div>
       </header>
 
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 p-4 md:p-6 bg-slate-200">
         {/* Report Generator */}
         <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm mb-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -173,9 +162,7 @@ const Reports = () => {
                 <SelectContent>
                   <SelectItem value="trip">Trip Report</SelectItem>
                   <SelectItem value="stop">Stop Report</SelectItem>
-                  <SelectItem value="event">Events Report</SelectItem>
                   <SelectItem value="route">Route Report</SelectItem>
-                  <SelectItem value="summary">Summary Report</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -251,7 +238,7 @@ const Reports = () => {
             <p className="text-gray-500">No report generated.</p>
           </div>
         ) : (
-          <div className="bg-white shadow overflow-x-auto sm:rounded-lg my-10">
+          <div className="w-full bg-white shadow-xl overflow-x-auto rounded-lg my-10">
             <div className="px-4 py-5 sm:p-6">
               <div className="w-full flex items-center justify-between my-4">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
@@ -313,32 +300,32 @@ const Reports = () => {
                       </tr>
                     ))}
                   </tbody>
-                  <div className="md:w-[300px] mt-6 flex justify-center items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                    >
-                      Prev
-                    </Button>
-
-                    <span className="text-sm text-gray-700">
-                      Page {currentPage} of {totalPages}
-                    </span>
-
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
                 </table>
+                <div className="my-6 flex justify-center items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Prev
+                  </Button>
+
+                  <span className="text-sm text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

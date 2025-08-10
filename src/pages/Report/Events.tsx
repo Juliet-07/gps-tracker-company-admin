@@ -73,7 +73,11 @@ const EventsReport = () => {
           hour12: true,
         }),
       }));
-
+      if (!jsonData || jsonData.length === 0) {
+        alert("No events data found for the selected filters.");
+        setGeneratedReports([]);
+        return;
+      }
       setGeneratedReports(formattedData);
       setCurrentPage(1);
     } catch (error) {

@@ -64,8 +64,8 @@ const FuelReport = () => {
       const jsonData = response.data;
       if (!jsonData || jsonData.length === 0) {
         alert("No summary data found for the selected filters.");
-        setFuelData([]); // clear any previous data
-        return; // stop further processing
+        setFuelData([]);
+        return;
       }
       setFuelData(jsonData);
       // console.log(jsonData, "checking the data");
